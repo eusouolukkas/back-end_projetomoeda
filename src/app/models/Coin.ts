@@ -1,4 +1,4 @@
-import { Schema, model, Document } from 'mongoose';
+import { Schema, model, Document, Types } from 'mongoose';
 import { IUser } from './User';
 
 enum CoinType {
@@ -12,7 +12,7 @@ export interface ICoin extends Document {
   year: number;
   information: string;
   type: CoinType;
-  userId: IUser;
+  userId: Types.ObjectId;
 }
 
 const coinSchema = new Schema<ICoin>({

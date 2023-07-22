@@ -21,7 +21,7 @@ userRoutes.get("/", async (req, res) => {
 userRoutes.get("/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await Coin.find({ user: userId }).populate('userId');
+    const user = await Coin.find({ userId }).populate('userId');
     return res.json(user);
   } catch (error) {
     return res.status(500).json({ error: "Erro ao buscar usuários." });
