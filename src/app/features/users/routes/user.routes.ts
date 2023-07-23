@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../../../models/User';
 import Coin from '../../../models/Coin';
-import 'dotenv/config';
+import { appEnv } from '../../../envs/app.env';
 
 export const userRoutes = Router();
 
@@ -105,7 +105,7 @@ userRoutes.post('/cadastro', async (req: Request, res: Response) => {
     try {
       const secret = "";
   
-      const token = jwt.sign({ id: user._id }, secret, { expiresIn: '1h' });
+      const token = jwt.sign({ id: user._id }, appEnv.key || secret, { expiresIn: '1h' });
       res.status(200).json({msg: "Autenticação realizada com sucesso!", token });
     } catch (error) {
       console.log(error);
@@ -133,24 +133,25 @@ userRoutes.post('/cadastro', async (req: Request, res: Response) => {
   });
   
   function authenticateToken(req: Request, res: Response, next: Function) {
-    const authHeader = req.headers["authorization"];
-    const token = authHeader && authHeader.split(' ')[1];
-  
-    if (!token) {
-      return res.status(401).json({ error: 'Token não fornecido, acesso negado!' });
-    }
+    const authHeader = req.headers.authorization;
 
     try {
-      const secret = "";
-
-      jwt.verify(token, secret);
-
-      next();
-    } catch (error) {
-      console.log(error);
-      res.status(400).json({msg: "Token inválido!"});
-      
-    }
+          const secret = "";
+    
+    if (!authHeader) {
+        throw new Error("Token is missing!");
+      }
+    
+      const [, token] = authHeader.split(" ");
+    
+          jwt.verify(token, appEnv.key || secret);
+    
+          next();
+        } catch (error) {
+          console.log(error);
+          res.status(400).json({msg: "Token inválido!"});
+          
+        }
   
   }
   
