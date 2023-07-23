@@ -2,10 +2,10 @@ import { Request, Response, Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../../../models/User';
+import Coin from '../../../models/Coin';
+import 'dotenv/config';
 
 export const userRoutes = Router();
-
-const SECRET_KEY = 'seu_segredo_aqui';
 
 //listar todos os usuários
 userRoutes.get("/", async (req, res) => {
@@ -17,10 +17,21 @@ userRoutes.get("/", async (req, res) => {
     }
 });
 
+//listar usuário e suas moedas 
+userRoutes.get("/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await Coin.find({ user: userId }).populate('userId');
+    return res.json(user);
+  } catch (error) {
+    return res.status(500).json({ error: "Erro ao buscar usuários." });
+  }
+});
+
 //obter usuário pelo ID
-userRoutes.get("/user/:id", async (req, res) => {
+userRoutes.get("/:userId", async (req, res) => {
     try {
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.userId);
 
         if(user) {
             res.json(user);
@@ -34,23 +45,43 @@ userRoutes.get("/user/:id", async (req, res) => {
 
 //cadastrar usuário
 userRoutes.post('/cadastro', async (req: Request, res: Response) => {
-    const { username, password } = req.body;
+    const { username, password, confirmPassword } = req.body;
   
     const existingUser = await User.findOne({ username });
   
     if (existingUser) {
       return res.status(409).json({ error: ' O nome de usuário já existe.' });
     }
+
+    if (!username) {
+      return res.status(422).json({ msg: "O username é obrigatório!" });
+    }
+
+    if (!password) {
+      return res.status(422).json({ msg: "A senha é obrigatória!" });
+    }
+
+    if(password !== confirmPassword) {
+      return res.status(422).json({ msg: "As senhas não coinscidem!" });
+    }
   
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const salt = await bcrypt.genSalt(12);
+    const hashPassword = await bcrypt.hash(password, salt);
   
     const newUser = new User({
       username,
-      password: hashedPassword,
+      password: hashPassword,
     });
+
+    try {
+      await newUser.save();
+      res.status(201).json({ message: 'Usuário registrado com sucesso.' });
+    } catch(error) {
+      console.log(error);
+      
+      res.status(500).json({msg: "Instabilidade no servidor, tente novamente mais tarde!"});
+    }
   
-    await newUser.save();
-    res.status(201).json({ message: 'Usuário registrado com sucesso.' });
   });
 
   //fazer login
@@ -60,12 +91,41 @@ userRoutes.post('/cadastro', async (req: Request, res: Response) => {
     const user = await User.findOne({ username });
   
     if (!user || !bcrypt.compareSync(password, user.password)) {
-      return res.status(401).json({ error: 'Usuário ou senha incorretos.' });
+      return res.status(404).json({ error: 'Usuário ou senha incorretos.' });
     }
+
+    if (!username) {
+      return res.status(422).json({ msg: "O username é obrigatório!" });
+    }
+
+    if (!password) {
+      return res.status(422).json({ msg: "A senha é obrigatória!" });
+    }
+
+    try {
+      const secret = "";
   
-    const token = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: '1h' });
-    res.json({ token });
+      const token = jwt.sign({ id: user._id }, secret, { expiresIn: '1h' });
+      res.status(200).json({msg: "Autenticação realizada com sucesso!", token });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({msg: "Instabilidade no servidor, tente novamente mais tarde!"});
+      
+    }
   });
+
+  //Private Route
+  userRoutes.get("/:id", authenticateToken, async (req: Request, res: Response) => {
+    const id = req.params.id;
+
+    const user = await User.findById(id, "-password");
+
+    if(!user) {
+      return res.status(404).json({msg: "Usuário não encontrado!"})
+    }
+
+    res.status(200).json({ user });
+  })
 
   //autenticação de usuário
   userRoutes.get('/protected', authenticateToken, (req: Request, res: Response) => {
@@ -73,23 +133,29 @@ userRoutes.post('/cadastro', async (req: Request, res: Response) => {
   });
   
   function authenticateToken(req: Request, res: Response, next: Function) {
-    const token = req.headers.authorization?.split(' ')[1];
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(' ')[1];
   
     if (!token) {
-      return res.status(401).json({ error: 'Token não fornecido.' });
+      return res.status(401).json({ error: 'Token não fornecido, acesso negado!' });
+    }
+
+    try {
+      const secret = "";
+
+      jwt.verify(token, secret);
+
+      next();
+    } catch (error) {
+      console.log(error);
+      res.status(400).json({msg: "Token inválido!"});
+      
     }
   
-    jwt.verify(token, SECRET_KEY, (err: any, decoded: any) => {
-      if (err) {
-        return res.status(401).json({ error: 'Token inválido.' });
-      }
-  
-      next();
-    });
   }
   
 //atualizar usuário
-userRoutes.put("/user/:id", async (req, res) => {
+userRoutes.put("/:id", async (req, res) => {
     try {
         const user = await User.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
@@ -106,7 +172,7 @@ userRoutes.put("/user/:id", async (req, res) => {
 });
 
 //excluir usuário
-userRoutes.delete("/user/:id", async (req, res) => {
+userRoutes.delete("/:id", async (req, res) => {
     try {
       const user = await User.findByIdAndDelete(req.params.id);
       if (user) {

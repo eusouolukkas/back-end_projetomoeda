@@ -1,4 +1,5 @@
 import { Schema, model, Document } from 'mongoose';
+import { IUser } from './User';
 
 enum CoinType {
   National = 'Nacional',
@@ -11,6 +12,7 @@ export interface ICoin extends Document {
   year: number;
   information: string;
   type: CoinType;
+  userId: IUser;
 }
 
 const coinSchema = new Schema<ICoin>({
@@ -19,6 +21,7 @@ const coinSchema = new Schema<ICoin>({
   year: { type: Number, required: true },
   information: { type: String },
   type: { type: String, enum: Object.values(CoinType), required: true },
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
 });
 
 export default model<ICoin>('Coin', coinSchema);

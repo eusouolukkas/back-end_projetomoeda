@@ -27,16 +27,17 @@ export const coinsRoutes = Router();
     }
   });
 
-// Rota para criar uma nova moeda
+// Rota para criar uma moeda com o usuário
 coinsRoutes.post("/", async (req, res) => {
     try {
-        const { country, value, year, information, type } = req.body;
+        const { country, value, year, information, type, userId } = req.body;
         const coin = new Coin({
             country,
             value,
             year,
             information,
             type,
+            userId
           });
           await coin.save();
           res.status(201).json(coin);
