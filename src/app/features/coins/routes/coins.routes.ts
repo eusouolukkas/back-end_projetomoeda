@@ -1,20 +1,21 @@
 import { Router } from "express";
 import Coin from "../../../models/Coin";
+import User from "../../../models/User";
 
 export const coinsRoutes = Router();
 
- // Rota para listar todas as moedas
+ // Listar todas as moedas
  coinsRoutes.get("/", async (req, res) => {
     try {
-      const coins = await Coin.find();
+      const coins = await Coin.find({});
       res.json(coins);
     } catch (error) {
       res.status(500).json({ error: "Erro ao buscar moedas." });
     }
   });
 
-  // Rota para obter uma moeda pelo ID
-  coinsRoutes.get("/coins/:id", async (req, res) => {
+  // Obter uma moeda pelo ID
+  coinsRoutes.get("/:id", async (req, res) => {
     try {
       const coin = await Coin.findById(req.params.id);
       if (coin) {
@@ -27,7 +28,7 @@ export const coinsRoutes = Router();
     }
   });
 
-// Rota para criar uma moeda com o usuário
+// Criar uma moeda com o usuário
 coinsRoutes.post("/", async (req, res) => {
     try {
         const { country, value, year, information, type, userId } = req.body;
@@ -46,8 +47,8 @@ coinsRoutes.post("/", async (req, res) => {
         }
 });
 
-// Rota para atualizar uma moeda existente
-coinsRoutes.put("/coins/:id", async (req, res) => {
+// Atualizar moeda
+coinsRoutes.put("/:id", async (req, res) => {
     try {
       const coin = await Coin.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
@@ -62,16 +63,38 @@ coinsRoutes.put("/coins/:id", async (req, res) => {
     }
   });
 
-      // Rota para excluir uma moeda
-      coinsRoutes.delete("/coins/:id", async (req, res) => {
+      // Deletar uma moeda
+      coinsRoutes.delete("/:id", async (req, res) => {
+        const { id } = req.params;
+
         try {
-          const coin = await Coin.findByIdAndDelete(req.params.id);
+          const coin = await Coin.findByIdAndDelete(id);
+
           if (coin) {
-            res.json(coin);
+            res.json({message: "Moeda deletada com sucesso!"});
           } else {
             res.status(404).json({ error: "Moeda não encontrada." });
           }
         } catch (error) {
           res.status(500).json({ error: "Erro ao excluir a moeda." });
+        }
+      });
+
+      coinsRoutes.delete('/:id', async (req, res) => {
+        try {
+          const coin = await Coin.findById(req.params.id);
+          if (!coin) {
+            return res.status(404).json({ error: 'Moeda não encontrada.' });
+          }
+      
+          const user = await User.findById(req.user.id);
+          if (!user || !coin.user.equals(user.id)) {
+            return res.status(403).json({ error: 'Permissão negada. Você não tem permissão para excluir esta moeda.' });
+          }
+      
+          await coin.deleteOne(coin.id);
+          res.json({ message: 'Moeda excluída com sucesso.' });
+        } catch (error) {
+          res.status(500).json({ error: 'Erro ao excluir a moeda.' });
         }
       });
