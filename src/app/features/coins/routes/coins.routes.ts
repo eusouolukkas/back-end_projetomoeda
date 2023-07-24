@@ -87,8 +87,8 @@ coinsRoutes.put("/:id", async (req, res) => {
             return res.status(404).json({ error: 'Moeda não encontrada.' });
           }
       
-          const user = await User.findById(req.user.id);
-          if (!user || !coin.user.equals(user.id)) {
+          const user = await User.findById(req.params.id);
+          if (!user || !coin.userId.equals(user.id)) {
             return res.status(403).json({ error: 'Permissão negada. Você não tem permissão para excluir esta moeda.' });
           }
       
