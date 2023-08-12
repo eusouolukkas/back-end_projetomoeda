@@ -1,13 +1,41 @@
 {
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "outDir": "./dist",
-      "strict": true,
-      "esModuleInterop": true,
-      "rootDir":"./src"
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "rootDir": "./",
+    "baseUrl": "./src",
+    "outDir": "./dist",
+    "typeRoots": ["./src/@types"],
+    "paths": {
+      "@models/*": [
+        "app/models/*"
+      ],
+      "@features/*": [
+        "app/features/*"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ],
+      "@errors/*": [
+        "app/errors/*"
+      ],
+      "@envs/*": [
+        "app/envs/*"
+      ],
+      "@config/*": [
+        "main/config/*"
+      ],
+      "@server/*": [
+        "main/server/*"
+      ]
     },
-    "include": ["src/**/*.ts"],
-    "exclude": ["node_modules"]
-  }
-  
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

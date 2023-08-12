@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Coin from "../../../models/Coin";
 import User from "../../../models/User";
+import { ensureAuthenticated } from "../../middlewares/EnsureAuthenticated";
 
 export const coinsRoutes = Router();
 
@@ -29,9 +30,10 @@ export const coinsRoutes = Router();
   });
 
 // Criar uma moeda com o usuário
-coinsRoutes.post("/", async (req, res) => {
+coinsRoutes.post("/", ensureAuthenticated, async (req, res) => {
     try {
-        const { country, value, year, information, type, userId } = req.body;
+        const { country, value, year, information, type } = req.body;
+        const { userId } = req;
         const coin = new Coin({
             country,
             value,
