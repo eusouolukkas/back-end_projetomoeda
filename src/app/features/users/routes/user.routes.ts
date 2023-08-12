@@ -28,7 +28,7 @@ export const userRoutes = Router();
     try {
       const secret = "";
   
-      const token = jwt.sign({ id: user._id }, appEnv.key || secret, { expiresIn: '1h' });
+      const token = jwt.sign({ userId: user._id }, appEnv.key || secret, { expiresIn: '1h' });
       res.status(200).json({msg: "Autenticação realizada com sucesso!", token });
     } catch (error) {
       console.log(error);
@@ -54,7 +54,7 @@ export const userRoutes = Router();
     
       const [, token] = authHeader.split(" ");
     
-          jwt.verify(token, appEnv.key || secret);
+          jwt.verify(token, appEnv.key || secret) as { userId: string };
     
           next();
         } catch (error) {
