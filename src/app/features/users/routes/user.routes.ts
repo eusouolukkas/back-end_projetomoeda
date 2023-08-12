@@ -15,15 +15,15 @@ userRoutes.post("/login", async (req: Request, res: Response) => {
 
   const user = await User.findOne({ username });
 
-  if (!user || !bcrypt.compareSync(password, user.password))
+  if (!user || !bcrypt.compareSync(password, user.password)) {
     throw new AppError("Usuário ou senha incorretos.", StatusCodes.NOT_FOUND);
-
-  if (!username)
+  }
+  if (!username) {
     throw new AppError("O username é obrigatório!", StatusCodes.BAD_REQUEST);
-
-  if (!password)
+  }
+  if (!password) {
     throw new AppError("A senha é obrigatória!", StatusCodes.BAD_REQUEST);
-
+  }
   const secret = "";
 
   const token = jwt.sign({}, appEnv.key || secret, {

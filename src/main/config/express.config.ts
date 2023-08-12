@@ -1,10 +1,10 @@
 import express, { NextFunction, Request, Response } from "express";
+import "express-async-errors";
 import cors from "cors";
 import { userRoutes } from "../../app/features/users/routes/user.routes";
 import { coinsRoutes } from "../../app/features/coins/routes/coins.routes";
-import { AppError } from "../../app/errors/AppError";
 import { StatusCodes } from "http-status-codes";
-import "express-async-errors";
+import { AppError } from "../../app/errors/AppError";
 
 export const createServer = () => {
   const app = express();
@@ -21,7 +21,7 @@ export const createServer = () => {
           message: err.message,
         });
       }
-      return response.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
+      return response.status(500).json({
         status: "error",
         message: `Internal server error - ${err.message}`,
       });
